@@ -19,6 +19,7 @@ package org.apache.spark.deploy.history
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.net.URI
 
+import com.google.common.io.Resources
 import com.linkedin.drelephant.analysis.AnalyticJob
 import com.linkedin.drelephant.configurations.fetcher.{FetcherConfiguration, FetcherConfigurationData}
 import com.linkedin.drelephant.util.{SparkUtils, SparkUtilsTest}
@@ -56,11 +57,10 @@ class SparkFsFetcherTest extends FunSpec with Matchers with MockitoSugar {
     describe(".fetchData") {
       it("returns the data collected from the Spark event log for the given analytic job") {
         val eventLogBytes = {
-          val eventLog =
-            """{"Event":"SparkListenerApplicationStart","App Name":"app","App ID":"application_1","Timestamp":1,"User":"foo"}"""
           val bout = new ByteArrayOutputStream()
           for {
-            in <- resource.managed(new ByteArrayInputStream(eventLog.getBytes("UTF-8")))
+            in <- resource.managed(new ByteArrayInputStream(Resources.toByteArray(
+              Resources.getResource("spark_event_logs/event_log_1"))))
             out <- resource.managed(new SnappyOutputStream(bout))
           } {
             IOUtils.copy(in, out)
@@ -90,12 +90,12 @@ class SparkFsFetcherTest extends FunSpec with Matchers with MockitoSugar {
         val analyticJob = new AnalyticJob().setAppId("application_1")
 
         val data = fetcher.fetchData(analyticJob)
-        data.getAppId should be("application_1")
+        data.getAppId should be("application_1457600942802_0093")
 
-        val generalData = data.getGeneralData
-        generalData.getApplicationId should be("application_1")
-        generalData.getApplicationName should be("app")
-        generalData.getSparkUser should be("foo")
+        val generalData = data.applicationInfo
+        generalData.id should be("application_1457600942802_0093")
+        generalData.name should be("PythonPi")
+        generalData.attempts.head.sparkUser should be("hdfs")
       }
     }
   }

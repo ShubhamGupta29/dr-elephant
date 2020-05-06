@@ -19,7 +19,6 @@ package com.linkedin.drelephant.spark.fetchers
 import com.linkedin.drelephant.analysis.{AnalyticJob, ElephantFetcher}
 import com.linkedin.drelephant.configurations.fetcher.FetcherConfigurationData
 import com.linkedin.drelephant.spark.data.SparkApplicationData
-import com.linkedin.drelephant.spark.legacydata.LegacyDataConverters
 import org.apache.spark.deploy.history.SparkFSFetcher
 
 /**
@@ -31,8 +30,7 @@ class FSFetcher(fetcherConfigurationData: FetcherConfigurationData)
   lazy val legacyFetcher = new SparkFSFetcher(fetcherConfigurationData)
 
   override def fetchData(analyticJob: AnalyticJob): SparkApplicationData = {
-    val legacyData = legacyFetcher.fetchData(analyticJob)
-    LegacyDataConverters.convert(legacyData)
+    legacyFetcher.fetchData(analyticJob)
   }
 }
 

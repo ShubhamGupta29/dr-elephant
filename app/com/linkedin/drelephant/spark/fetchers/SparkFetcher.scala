@@ -19,9 +19,6 @@ package com.linkedin.drelephant.spark.fetchers
 import java.util
 import java.util.concurrent.TimeoutException
 
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration.{Duration, SECONDS}
-import scala.util.{Failure, Success, Try}
 import com.linkedin.drelephant.analysis.{AnalyticJob, ElephantBackfillFetcher, ElephantFetcher}
 import com.linkedin.drelephant.configurations.fetcher.FetcherConfigurationData
 import com.linkedin.drelephant.spark.data.{SparkApplicationData, SparkRestDerivedData}
@@ -31,6 +28,10 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.log4j.Logger
 import org.apache.spark.SparkConf
 
+import scala.concurrent.duration.{Duration, SECONDS}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+
 
 /**
   * A fetcher that gets Spark-related data from a combination of the Spark monitoring REST API and Spark event logs.
@@ -39,6 +40,7 @@ class SparkFetcher(fetcherConfigurationData: FetcherConfigurationData)
   extends ElephantFetcher[SparkApplicationData] with ElephantBackfillFetcher {
 
   import SparkFetcher._
+
   import ExecutionContext.Implicits.global
 
   private val logger: Logger = Logger.getLogger(classOf[SparkFetcher])

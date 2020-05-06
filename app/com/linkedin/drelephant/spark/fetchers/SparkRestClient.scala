@@ -22,7 +22,6 @@ import java.text.SimpleDateFormat
 import java.util.zip.ZipInputStream
 import java.util.{Calendar, Date, SimpleTimeZone}
 
-import com.linkedin.drelephant.spark.legacydata.LegacyDataConverters
 import org.apache.spark.deploy.history.SparkDataCollection
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -144,29 +143,27 @@ class SparkRestClient(sparkConf: SparkConf) {
         case (None, _) => throw new RuntimeException(s"Failed to read log for application ${analyticJob.getAppId}")
         case (Some(inputStream), fileName) => {
           val dataCollection = new SparkDataCollection()
-          dataCollection.load(inputStream, fileName)
-          val sparkDataCollection = LegacyDataConverters.convert(dataCollection)
-          // Augment missing fields, which would happen typically for backfill jobs.
-          augemntAnalyticJob(analyticJob, dataCollection, sparkDataCollection)
-          sparkDataCollection
+          dataCollection.replayEventLogs(inputStream, fileName)
+          val data = dataCollection.getSparkApplicationData
+          augmentAnalyticJob(analyticJob, data)
+          data
         }
       }
     }
   }
 
-  private def augemntAnalyticJob(analyticJob: AnalyticJob, dataCollection: SparkDataCollection,
-      sparkDataCollection: SparkApplicationData): Unit = {
+  private def augmentAnalyticJob(analyticJob: AnalyticJob, data: SparkApplicationData): Unit = {
     if (analyticJob.getUser == null || analyticJob.getUser.isEmpty) {
-      analyticJob.setUser(dataCollection.getGeneralData.getSparkUser)
+      analyticJob.setUser(data.applicationInfo.attempts.head.sparkUser)
     }
     if (analyticJob.getQueueName == null || analyticJob.getQueueName.isEmpty) {
-      analyticJob.setQueueName(sparkDataCollection.appConfigurationProperties.getOrElse("spark.yarn.queue", ""))
+      analyticJob.setQueueName(data.appConfigurationProperties.getOrElse("spark.yarn.queue", ""))
     }
     if (analyticJob.getStartTime <= 0) {
-      analyticJob.setStartTime(dataCollection.getGeneralData.getStartTime)
+      analyticJob.setStartTime(data.applicationInfo.attempts.maxBy(_.startTime).startTime.getTime)
     }
     if (analyticJob.getFinishTime <= 0) {
-      analyticJob.setFinishTime(dataCollection.getGeneralData.getEndTime)
+      analyticJob.setFinishTime(data.applicationInfo.attempts.maxBy(_.startTime).endTime.getTime)
     }
   }
 

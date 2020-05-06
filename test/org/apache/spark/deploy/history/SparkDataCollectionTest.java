@@ -16,24 +16,10 @@
 
 package org.apache.spark.deploy.history;
 
-import com.linkedin.drelephant.spark.legacydata.SparkJobProgressData;
-import java.io.IOException;
-import org.apache.spark.SparkConf;
-import org.apache.spark.scheduler.ApplicationEventListener;
-import org.apache.spark.scheduler.ReplayListenerBus;
-import org.apache.spark.storage.StorageStatusListener;
-import org.apache.spark.storage.StorageStatusTrackingListener;
-import org.apache.spark.ui.env.EnvironmentListener;
-import org.apache.spark.ui.exec.ExecutorsListener;
-import org.apache.spark.ui.jobs.JobProgressListener;
-import org.apache.spark.ui.storage.StorageListener;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
 
 public class SparkDataCollectionTest {
 
@@ -45,11 +31,8 @@ public class SparkDataCollectionTest {
 
         InputStream in = new BufferedInputStream(
                 SparkDataCollectionTest.class.getClassLoader().getResourceAsStream(event_log_dir + "event_log_1"));
-        dataCollection.load(in, in.toString());
+        dataCollection.replayEventLogs(in, in.toString());
         in.close();
-
-        SparkJobProgressData jobProgressData = dataCollection.getJobProgressData();
-        assertNotNull("can't get job progress data", jobProgressData);
     }
 
 }
